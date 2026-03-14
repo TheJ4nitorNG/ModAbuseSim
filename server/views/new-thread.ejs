@@ -1,0 +1,59 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: 'New Thread', url: null }
+];
+%>
+
+<div class="page-title">
+  <h2><i class="fas fa-plus-circle"></i> Start a New Thread</h2>
+  <p>Share your thoughts with the community. All posts are subject to moderation.</p>
+</div>
+
+<% if (!isLoggedIn) { %>
+  <div class="login-prompt">
+    <i class="fas fa-user-lock"></i>
+    <span>You must be logged in to create a thread.</span>
+    <br><br>
+    <a href="/login" class="btn btn-primary" data-testid="link-login-to-post"><i class="fas fa-sign-in-alt"></i> Login</a>
+    <a href="/register" class="btn btn-secondary" data-testid="link-register-to-post"><i class="fas fa-user-plus"></i> Register</a>
+  </div>
+<% } else if (typeof loggedInUser !== 'undefined' && loggedInUser && loggedInUser.status === 'banned') { %>
+  <div class="flash-message flash-error">
+    <i class="fas fa-ban"></i>
+    You cannot create threads while banned.
+  </div>
+<% } else { %>
+
+<form action="/new-thread" method="POST" class="new-thread-form" data-testid="form-new-thread">
+  <div class="form-group">
+    <label for="title">Thread Title</label>
+    <input type="text" id="title" name="title" maxlength="200" required data-testid="input-thread-title" placeholder="Enter a descriptive title for your thread">
+    <div class="form-help">Keep it concise and descriptive. Maximum 200 characters.</div>
+  </div>
+  
+  <div class="form-group">
+    <label for="body">Thread Content</label>
+    <textarea id="body" name="body" required data-testid="input-thread-body" placeholder="Type your message here..."></textarea>
+    <div class="form-help">Be civil. Remember that moderators are always watching. Rule 4 applies at all times.</div>
+  </div>
+  
+  <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end;">
+    <a href="/" class="btn btn-secondary">Cancel</a>
+    <button type="submit" class="btn btn-primary" data-testid="button-create-thread">
+      <i class="fas fa-paper-plane"></i> Create Thread
+    </button>
+  </div>
+</form>
+
+<div style="margin-top: 20px; padding: 15px; background: #f8f8f8; border: 1px solid #ddd; font-size: 10px; color: #666;">
+  <strong><i class="fas fa-exclamation-circle"></i> Posting Guidelines:</strong>
+  <ul style="margin: 8px 0 0 20px; line-height: 1.6;">
+    <li>All posts are subject to moderator review</li>
+    <li>Moderator decisions are final (and possibly arbitrary)</li>
+    <li>Low reputation users may experience enhanced scrutiny</li>
+    <li>Violation of Rule 4 will result in immediate action</li>
+  </ul>
+</div>
+
+<% } %>

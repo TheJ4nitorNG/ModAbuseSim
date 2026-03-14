@@ -1,0 +1,142 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: 'Museum', url: '/museum' },
+  { label: 'Exhibit #' + String(entry.id).padStart(3, '0'), url: null }
+];
+%>
+
+<div class="museum-detail">
+  <div class="museum-detail-header">
+    <h2><%= entry.title %></h2>
+    <div class="exhibit-meta">
+      <span><i class="fas fa-calendar"></i> Exhibit created: <%= new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+      <span style="margin-left: 15px;">
+        <span class="verdict-badge verdict-<%= entry.verdict.toLowerCase().replace(' ', '-') %>">
+          <%= entry.verdict %>
+        </span>
+      </span>
+    </div>
+  </div>
+  
+  <div class="museum-detail-body">
+    <div class="timeline-section">
+      <h3><i class="fas fa-history"></i> Account Timeline</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-date"><%= new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+          <div class="timeline-content">
+            <strong>Account Created</strong> - User "<%= user.username %>" joined the forum
+          </div>
+        </div>
+        
+        <% if (user.post_count > 0) { %>
+        <div class="timeline-item">
+          <div class="timeline-date">Activity Period</div>
+          <div class="timeline-content">
+            <strong>Posted <%= user.post_count %> times</strong> - Accumulated <%= user.reputation %> reputation points
+          </div>
+        </div>
+        <% } %>
+        
+        <% modActions.forEach(function(action) { %>
+        <div class="timeline-item <%= action.action_type === 'ban' ? 'ban' : (action.action_type === 'warn' ? 'warning' : '') %>">
+          <div class="timeline-date"><%= new Date(action.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) %></div>
+          <div class="timeline-content">
+            <strong><%= action.action_type.toUpperCase() %></strong> - 
+            <% 
+              let payload = {};
+              try { payload = JSON.parse(action.action_payload || '{}'); } catch(e) {}
+            %>
+            <%= payload.reason || 'Action taken by moderation team' %>
+            <div style="font-size: 9px; color: #888; margin-top: 3px;">
+              By: <%= action.actor_username %>
+            </div>
+          </div>
+        </div>
+        <% }); %>
+        
+        <% if (bans && bans.length > 0) { %>
+          <% bans.forEach(function(ban) { %>
+          <div class="timeline-item ban">
+            <div class="timeline-date"><%= new Date(ban.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+            <div class="timeline-content">
+              <strong>BANNED</strong> - <%= ban.reason_text %>
+              <div style="font-size: 9px; color: #888; margin-top: 3px;">
+                Reason code: <%= ban.reason_code %> | Severity: <%= ban.severity %>/5 | 
+                Duration: <%= ban.duration_hours === 0 ? 'Permanent' : ban.duration_hours + ' hours' %>
+              </div>
+            </div>
+          </div>
+          <% }); %>
+        <% } %>
+        
+        <div class="timeline-item">
+          <div class="timeline-date"><%= new Date(user.last_seen_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+          <div class="timeline-content">
+            <strong>Last Seen</strong> - Final recorded activity
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="artifacts-section">
+      <h3><i class="fas fa-folder-open"></i> Archived Artifacts</h3>
+      
+      <% if (artifacts && artifacts.length > 0) { %>
+        <% artifacts.forEach(function(artifact) { %>
+          <div class="artifact" data-testid="artifact-<%= artifact.id %>">
+            <div class="artifact-header">
+              <% if (artifact.artifact_type === 'quote') { %>
+                <i class="fas fa-quote-left"></i> USER QUOTE
+              <% } else if (artifact.artifact_type === 'mod_log') { %>
+                <i class="fas fa-hammer"></i> MODERATION LOG
+              <% } else if (artifact.artifact_type === 'witness_statement') { %>
+                <i class="fas fa-user-secret"></i> WITNESS STATEMENT
+              <% } else if (artifact.artifact_type === 'screenshot_text') { %>
+                <i class="fas fa-image"></i> SCREENSHOT ARCHIVE
+              <% } else { %>
+                <i class="fas fa-file-alt"></i> <%= artifact.artifact_type.toUpperCase() %>
+              <% } %>
+            </div>
+            <div class="artifact-content <%= artifact.artifact_type === 'quote' ? 'quote' : '' %> <%= artifact.artifact_type === 'mod_log' ? 'mod-log' : '' %> <%= artifact.artifact_type === 'witness_statement' ? 'witness' : '' %> <%= artifact.artifact_type === 'screenshot_text' ? 'missing' : '' %>">
+              <%= artifact.content %>
+            </div>
+            <div class="artifact-source">
+              Source: <%= artifact.source_label %> | Archived: <%= new Date(artifact.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="artifact">
+          <div class="artifact-header">
+            <i class="fas fa-question-circle"></i> NO ARTIFACTS AVAILABLE
+          </div>
+          <div class="artifact-content missing">
+            [Artifact collection pending or data was lost during server migration]
+          </div>
+        </div>
+      <% } %>
+    </div>
+    
+    <div style="margin-top: 30px; padding: 15px; background: #f8f8f8; border: 1px solid #ddd;">
+      <h4 style="font-size: 11px; margin-bottom: 8px;"><i class="fas fa-gavel"></i> Official Summary</h4>
+      <p style="font-size: 11px; line-height: 1.6; color: #555;">
+        <%= entry.summary %>
+      </p>
+    </div>
+    
+    <div style="margin-top: 20px; padding: 15px; background: #ffe; border: 1px solid #cc9; font-size: 10px;">
+      <strong><i class="fas fa-exclamation-triangle"></i> Disclaimer:</strong>
+      This exhibit is presented for archival purposes only. Witness statements may be contradictory. 
+      Moderation logs reflect the perspective of the moderation team at the time of action. 
+      The verdict "<%= entry.verdict %>" represents the current consensus, which may change.
+    </div>
+  </div>
+</div>
+
+<div class="action-bar" style="margin-top: 15px;">
+  <a href="/museum" class="btn btn-secondary" data-testid="link-back-to-museum">
+    <i class="fas fa-arrow-left"></i> Return to Museum
+  </a>
+</div>

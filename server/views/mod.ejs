@@ -1,0 +1,188 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: 'Mod Panel', url: null }
+];
+%>
+
+<div class="page-title" style="background: linear-gradient(180deg, #6a3a3a 0%, #4a2a2a 100%);">
+  <h2><i class="fas fa-hammer"></i> Moderation Dashboard</h2>
+  <p>With great power comes great... flexibility in enforcement.</p>
+</div>
+
+<% if (!currentUser || (currentUser.role !== 'mod' && currentUser.role !== 'admin')) { %>
+  <div class="flash-message flash-error">
+    <i class="fas fa-ban"></i>
+    Access denied. This area is restricted to moderators and administrators.
+  </div>
+<% } else { %>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+  <div class="mod-section">
+    <div class="mod-section-header">
+      <i class="fas fa-chart-line"></i> Quick Stats
+    </div>
+    <div class="mod-section-body">
+      <table class="stats-table" style="width: 100%;">
+        <tr><td>Pending Reports:</td><td style="font-weight: bold; color: <%= pendingReports.length > 0 ? '#a00' : '#3a3' %>;"><%= pendingReports.length %></td></tr>
+        <tr><td>Actions Today:</td><td><%= recentActions.filter(a => new Date(a.created_at).toDateString() === new Date().toDateString()).length %></td></tr>
+        <tr><td>Active Bans:</td><td><%= activeBans.length %></td></tr>
+        <tr><td>Your Mod Mood:</td><td style="font-style: italic;"><%= ['Lenient', 'Fair', 'Strict', 'Harsh', 'Chaotic'][Math.floor(Math.random() * 5)] %></td></tr>
+      </table>
+    </div>
+  </div>
+  
+  <div class="mod-section">
+    <div class="mod-section-header">
+      <i class="fas fa-dice"></i> RNG Status
+    </div>
+    <div class="mod-section-body">
+      <p style="font-size: 10px; color: #666; margin-bottom: 10px;">
+        Moderation outcomes are influenced by random factors including severity swing, mod mood, and user reputation.
+      </p>
+      <div style="background: #f8f8f8; padding: 10px; border: 1px solid #ddd; font-family: monospace; font-size: 10px;">
+        Daily Seed: <%= Math.floor(Date.now() / 86400000) %><br>
+        Mood Modifier: <%= (Math.random() * 2 - 1).toFixed(2) %><br>
+        Escalation Chance: <%= Math.floor(Math.random() * 20 + 5) %>%
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mod-section" data-testid="section-pending-reports">
+  <div class="mod-section-header">
+    <i class="fas fa-flag"></i> Pending Reports (<%= pendingReports.length %>)
+  </div>
+  <div class="mod-section-body">
+    <% if (pendingReports.length > 0) { %>
+      <% pendingReports.forEach(function(report) { %>
+        <div class="report-item" data-testid="report-<%= report.id %>">
+          <div class="report-info">
+            <span class="report-type"><%= report.target_type %></span>
+            <span class="report-target">
+              <% if (report.target_type === 'thread') { %>
+                <a href="/thread/<%= report.target_id %>">Thread #<%= report.target_id %></a>
+              <% } else { %>
+                Post #<%= report.target_id %>
+              <% } %>
+            </span>
+            <div class="report-reason"><i class="fas fa-comment"></i> "<%= report.reason %>"</div>
+            <div class="report-meta">
+              Reported by: <%= report.reporter_username %> | 
+              <%= new Date(report.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) %>
+            </div>
+          </div>
+          <div class="report-actions">
+            <form action="/mod/action" method="POST" class="action-form" data-testid="form-dismiss-report-<%= report.id %>">
+              <input type="hidden" name="action" value="dismiss_report">
+              <input type="hidden" name="reportId" value="<%= report.id %>">
+              <button type="submit" class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;">Dismiss</button>
+            </form>
+            <% if (report.target_type === 'post') { %>
+              <form action="/mod/action" method="POST" class="action-form" data-testid="form-delete-from-report-<%= report.id %>">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="targetType" value="post">
+                <input type="hidden" name="targetId" value="<%= report.target_id %>">
+                <input type="hidden" name="reportId" value="<%= report.id %>">
+                <input type="hidden" name="reason" value="<%= report.reason %>">
+                <button type="submit" class="btn btn-danger" style="padding: 4px 8px; font-size: 10px;">Delete</button>
+              </form>
+            <% } %>
+            <% if (report.target_user_id) { %>
+              <a href="/mod/user/<%= report.target_user_id %>" class="btn btn-secondary" style="padding: 4px 8px; font-size: 10px;">View User</a>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="empty-state" style="padding: 30px;">
+        <i class="fas fa-check-circle" style="color: #3a3;"></i>
+        <h3>No Pending Reports</h3>
+        <p>The queue is clear. For now.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="mod-section" data-testid="section-recent-actions">
+  <div class="mod-section-header">
+    <i class="fas fa-history"></i> Recent Moderation Actions
+  </div>
+  <div class="mod-section-body" style="max-height: 400px; overflow-y: auto;">
+    <% if (recentActions.length > 0) { %>
+      <% recentActions.slice(0, 20).forEach(function(action) { %>
+        <div class="report-item" style="padding: 8px 12px;">
+          <div class="report-info">
+            <span class="infraction-type <%= action.action_type %>"><%= action.action_type %></span>
+            <% if (action.target_username) { %>
+              <a href="/mod/user/<%= action.target_user_id %>"><%= action.target_username %></a>
+            <% } %>
+            <% if (action.target_thread_id) { %>
+              | <a href="/thread/<%= action.target_thread_id %>">Thread #<%= action.target_thread_id %></a>
+            <% } %>
+            <% if (action.target_post_id) { %>
+              | Post #<%= action.target_post_id %>
+            <% } %>
+            <div class="report-meta">
+              By: <%= action.actor_username %> | 
+              <%= new Date(action.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) %>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div class="empty-state" style="padding: 30px;">
+        <i class="fas fa-history"></i>
+        <h3>No Recent Actions</h3>
+        <p>Moderation history is empty.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="mod-section" data-testid="section-active-bans">
+  <div class="mod-section-header">
+    <i class="fas fa-ban"></i> Active Bans (<%= activeBans.length %>)
+  </div>
+  <div class="mod-section-body">
+    <% if (activeBans.length > 0) { %>
+      <table class="forum-table" style="margin: 0;">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Reason</th>
+            <th>Severity</th>
+            <th>Duration</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% activeBans.forEach(function(ban) { %>
+            <tr data-testid="row-ban-<%= ban.id %>">
+              <td><a href="/mod/user/<%= ban.user_id %>"><%= ban.username %></a></td>
+              <td><%= ban.reason_code %></td>
+              <td><%= ban.severity %>/5</td>
+              <td><%= ban.duration_hours === 0 ? 'Permanent' : ban.duration_hours + 'h' %></td>
+              <td>
+                <form action="/mod/action" method="POST" class="action-form" data-testid="form-unban-<%= ban.id %>">
+                  <input type="hidden" name="action" value="unban">
+                  <input type="hidden" name="userId" value="<%= ban.user_id %>">
+                  <input type="hidden" name="banId" value="<%= ban.id %>">
+                  <button type="submit" class="btn btn-secondary" style="padding: 3px 6px; font-size: 9px;">Unban</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <div class="empty-state" style="padding: 20px;">
+        <i class="fas fa-users"></i>
+        <h3>No Active Bans</h3>
+        <p>All users are in good standing. Suspiciously so.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% } %>

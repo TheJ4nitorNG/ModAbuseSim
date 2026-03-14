@@ -1,0 +1,224 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: thread.title.substring(0, 40) + (thread.title.length > 40 ? '...' : ''), url: null }
+];
+%>
+
+<div class="thread-header">
+  <h2><%= thread.title %></h2>
+  <div class="thread-info">
+    Started by <strong><%= thread.author_username %></strong> on 
+    <%= new Date(thread.created_at).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+    | <%= thread.view_count %> views | <%= thread.reply_count %> replies
+  </div>
+  <% if (thread.locked || thread.sticky) { %>
+    <div class="thread-badges">
+      <% if (thread.sticky) { %>
+        <span class="badge badge-sticky"><i class="fas fa-thumbtack"></i> Sticky</span>
+      <% } %>
+      <% if (thread.locked) { %>
+        <span class="badge badge-locked"><i class="fas fa-lock"></i> Locked</span>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<!-- Original Post -->
+<div class="post-container" data-testid="post-op">
+  <div class="post-header">
+    <span class="post-author"><%= thread.author_username %></span>
+    <span class="post-date">
+      Posted: <%= new Date(thread.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) %>
+    </span>
+  </div>
+  <div class="post-body-wrapper">
+    <div class="post-userinfo">
+      <div class="post-avatar">
+        <i class="fas fa-user"></i>
+      </div>
+      <div class="post-username role-<%= thread.author_role %>"><%= thread.author_username %></div>
+      <div class="post-usertitle"><%= thread.author_title %></div>
+      <div class="post-userstats">
+        <div><span class="stat-label">Posts:</span> <%= thread.author_post_count %></div>
+        <div><span class="stat-label">Rep:</span> <%= thread.author_reputation %></div>
+        <div><span class="stat-label">Joined:</span> <%= new Date(thread.author_joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) %></div>
+      </div>
+    </div>
+    <div class="post-content">
+      <div class="post-text">
+        <%- thread.body.replace(/\n/g, '<br>') %>
+      </div>
+      <% if (thread.author_signature) { %>
+        <div class="post-signature">
+          -- <%= thread.author_signature %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+  <div class="post-footer">
+    <% if (currentUser && currentUser.status !== 'banned') { %>
+      <button class="post-action-btn" onclick="showReportForm('thread', <%= thread.id %>)" data-testid="button-report-thread">
+        <i class="fas fa-flag"></i> Report
+      </button>
+    <% } %>
+    <% if (typeof loggedInUser !== 'undefined' && loggedInUser && (loggedInUser.role === 'mod' || loggedInUser.role === 'admin')) { %>
+      <form action="/mod/action" method="POST" class="action-form" data-testid="form-lock-thread">
+        <input type="hidden" name="action" value="<%= thread.locked ? 'unlock' : 'lock' %>">
+        <input type="hidden" name="targetType" value="thread">
+        <input type="hidden" name="targetId" value="<%= thread.id %>">
+        <button type="submit" class="post-action-btn mod-action">
+          <i class="fas fa-<%= thread.locked ? 'unlock' : 'lock' %>"></i> <%= thread.locked ? 'Unlock' : 'Lock' %>
+        </button>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<!-- Replies -->
+<% posts.forEach(function(post, index) { %>
+  <div class="post-container" data-testid="post-<%= post.id %>">
+    <div class="post-header">
+      <span class="post-author"><%= post.author_username %></span>
+      <span class="post-date">
+        Posted: <%= new Date(post.created_at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) %>
+        <% if (post.edited_at) { %>
+          | Edited: <%= new Date(post.edited_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) %>
+        <% } %>
+        | #<%= index + 2 %>
+      </span>
+    </div>
+    <div class="post-body-wrapper">
+      <div class="post-userinfo">
+        <div class="post-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="post-username role-<%= post.author_role %>"><%= post.author_username %></div>
+        <div class="post-usertitle"><%= post.author_title %></div>
+        <div class="post-userstats">
+          <div><span class="stat-label">Posts:</span> <%= post.author_post_count %></div>
+          <div><span class="stat-label">Rep:</span> <%= post.author_reputation %></div>
+          <div><span class="stat-label">Joined:</span> <%= new Date(post.author_joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) %></div>
+        </div>
+      </div>
+      <div class="post-content">
+        <% if (post.deleted) { %>
+          <div class="post-text deleted">
+            [This post has been removed by a moderator]
+            <% if (post.mod_note) { %>
+              <div class="mod-note-inline"><i class="fas fa-exclamation-triangle"></i> <%= post.mod_note %></div>
+            <% } %>
+          </div>
+        <% } else { %>
+          <div class="post-text">
+            <%- post.body.replace(/\n/g, '<br>') %>
+          </div>
+          <% if (post.mod_note) { %>
+            <div class="mod-note-inline"><i class="fas fa-comment-alt"></i> Mod note: <%= post.mod_note %></div>
+          <% } %>
+        <% } %>
+        <% if (post.author_signature && !post.deleted) { %>
+          <div class="post-signature">
+            -- <%= post.author_signature %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+    <div class="post-footer">
+      <% if (currentUser && currentUser.status !== 'banned' && !post.deleted) { %>
+        <button class="post-action-btn" onclick="showReportForm('post', <%= post.id %>)" data-testid="button-report-post-<%= post.id %>">
+          <i class="fas fa-flag"></i> Report
+        </button>
+      <% } %>
+      <% if (typeof loggedInUser !== 'undefined' && loggedInUser && (loggedInUser.role === 'mod' || loggedInUser.role === 'admin') && !post.deleted) { %>
+        <a href="/mod/user/<%= post.author_user_id %>" class="post-action-btn mod-action" data-testid="link-mod-user-<%= post.author_user_id %>">
+          <i class="fas fa-user-cog"></i> Mod User
+        </a>
+        <form action="/mod/action" method="POST" class="action-form" data-testid="form-delete-post-<%= post.id %>">
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="targetType" value="post">
+          <input type="hidden" name="targetId" value="<%= post.id %>">
+          <input type="hidden" name="reason" value="Content violation">
+          <button type="submit" class="post-action-btn mod-action">
+            <i class="fas fa-trash"></i> Delete
+          </button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+<% }); %>
+
+<!-- Reply Form -->
+<% if (!thread.locked && canPost) { %>
+  <div class="reply-form-container" data-testid="container-reply-form">
+    <div class="reply-form-header">
+      <i class="fas fa-reply"></i> Post a Reply
+    </div>
+    <form action="/thread/<%= thread.id %>/reply" method="POST" class="reply-form" data-testid="form-reply">
+      <textarea name="body" placeholder="Type your reply here... (Keep it civil, we're watching)" required data-testid="input-reply-body"></textarea>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" data-testid="button-submit-reply">
+          <i class="fas fa-paper-plane"></i> Post Reply
+        </button>
+      </div>
+    </form>
+  </div>
+<% } else if (thread.locked) { %>
+  <div class="flash-message flash-info">
+    <i class="fas fa-lock"></i>
+    This thread has been locked. No new replies are accepted.
+  </div>
+<% } else if (typeof loggedInUser !== 'undefined' && loggedInUser && loggedInUser.status === 'banned') { %>
+  <div class="flash-message flash-error">
+    <i class="fas fa-ban"></i>
+    You cannot reply while banned.
+  </div>
+<% } else if (!isLoggedIn) { %>
+  <div class="login-prompt">
+    <i class="fas fa-user-lock"></i>
+    <span>You must be logged in to reply to this thread.</span>
+    <br><br>
+    <a href="/login" class="btn btn-primary" data-testid="link-login-to-reply"><i class="fas fa-sign-in-alt"></i> Login</a>
+    <a href="/register" class="btn btn-secondary" data-testid="link-register-to-reply"><i class="fas fa-user-plus"></i> Register</a>
+  </div>
+<% } %>
+
+<!-- Report Modal (hidden by default) -->
+<div id="report-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000;">
+  <div style="background: white; max-width: 400px; margin: 100px auto; border: 1px solid #bbb; border-radius: 3px;">
+    <div style="background: linear-gradient(180deg, #e8e8e8 0%, #d0d0d0 100%); padding: 10px 15px; font-weight: bold; border-bottom: 1px solid #bbb;">
+      <i class="fas fa-flag"></i> Report Content
+    </div>
+    <form action="/report" method="POST" style="padding: 15px;" data-testid="form-report">
+      <input type="hidden" name="targetType" id="report-target-type">
+      <input type="hidden" name="targetId" id="report-target-id">
+      <div class="form-group">
+        <label for="report-reason">Reason for report:</label>
+        <select name="reason" id="report-reason" required data-testid="select-report-reason">
+          <option value="">Select a reason...</option>
+          <option value="Spam">Spam</option>
+          <option value="Off-topic">Off-topic</option>
+          <option value="Harassment">Harassment</option>
+          <option value="Wrong vibes">Wrong vibes</option>
+          <option value="Rule violation">Rule violation (unspecified)</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div style="text-align: right; margin-top: 15px;">
+        <button type="button" onclick="hideReportForm()" class="btn btn-secondary">Cancel</button>
+        <button type="submit" class="btn btn-primary" data-testid="button-submit-report">Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function showReportForm(type, id) {
+  document.getElementById('report-target-type').value = type;
+  document.getElementById('report-target-id').value = id;
+  document.getElementById('report-modal').style.display = 'block';
+}
+function hideReportForm() {
+  document.getElementById('report-modal').style.display = 'none';
+}
+</script>

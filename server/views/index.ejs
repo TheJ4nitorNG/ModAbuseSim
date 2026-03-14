@@ -1,0 +1,224 @@
+<% 
+const breadcrumbs = [{ label: 'Home', url: null }];
+%>
+
+<div class="page-title">
+  <h2><i class="fas fa-comments"></i> Forum Index</h2>
+  <p>Welcome to The Forum That Ate Itself. All discussions are monitored.</p>
+</div>
+
+<% if (currentUser && currentUser.status !== 'banned') { %>
+<div class="action-bar">
+  <a href="/new-thread" class="btn btn-primary" data-testid="link-new-thread">
+    <i class="fas fa-plus"></i> Start New Thread
+  </a>
+</div>
+<% } %>
+
+<% if (currentUser && currentUser.status === 'banned') { %>
+<div class="flash-message flash-error">
+  <i class="fas fa-ban"></i>
+  Your account is currently banned. You may browse but cannot post.
+</div>
+<% } %>
+
+<div class="how-to-use" style="background: #ffe; border: 1px solid #cc9; padding: 12px; margin-bottom: 15px; font-size: 10px;">
+  <strong><i class="fas fa-info-circle"></i> How to Use This Forum Simulator:</strong>
+  <ul style="margin: 8px 0 0 20px; line-height: 1.6;">
+    <li><strong>Register or Login</strong> to create threads, post replies, and report content</li>
+    <li>To test <strong>moderation features</strong>, login as Administrator (password: admin123)</li>
+    <li>Admins can access the <strong>Mod Panel</strong> to warn, delete, lock, or ban users</li>
+    <li>Moderation actions have <strong>RNG outcomes</strong> - a warning might escalate to a ban!</li>
+    <li>Banned users automatically appear in the <strong>Cancelled User Museum</strong></li>
+    <li>Check the <strong>Rules</strong> page - but be warned, Rule 4 is classified...</li>
+  </ul>
+</div>
+
+<table class="forum-table" data-testid="table-threads">
+  <thead>
+    <tr>
+      <th class="thread-icon"></th>
+      <th>Thread</th>
+      <th class="stats-col">Replies</th>
+      <th class="stats-col">Views</th>
+      <th class="last-post-col">Last Post</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (threads && threads.length > 0) { %>
+      <% threads.forEach(function(thread) { %>
+        <tr data-testid="row-thread-<%= thread.id %>">
+          <td class="thread-icon <%= thread.sticky ? 'sticky' : '' %> <%= thread.locked ? 'locked' : '' %> <%= thread.reply_count > 50 ? 'hot' : '' %>">
+            <% if (thread.sticky) { %>
+              <i class="fas fa-thumbtack" title="Sticky"></i>
+            <% } else if (thread.locked) { %>
+              <i class="fas fa-lock" title="Locked"></i>
+            <% } else if (thread.reply_count > 50) { %>
+              <i class="fas fa-fire" title="Hot Thread"></i>
+            <% } else { %>
+              <i class="fas fa-comment-alt"></i>
+            <% } %>
+          </td>
+          <td>
+            <div class="thread-title">
+              <a href="/thread/<%= thread.id %>" data-testid="link-thread-<%= thread.id %>"><%= thread.title %></a>
+            </div>
+            <div class="thread-meta">
+              Started by <strong><%= thread.author_username %></strong> 
+              on <%= new Date(thread.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+            </div>
+          </td>
+          <td class="stats-col"><%= thread.reply_count %></td>
+          <td class="stats-col"><%= thread.view_count %></td>
+          <td class="last-post-col">
+            <% if (thread.last_post_username) { %>
+              <div class="username"><%= thread.last_post_username %></div>
+            <% } else { %>
+              <div class="username"><%= thread.author_username %></div>
+            <% } %>
+            <div class="timestamp">
+              <%= new Date(thread.last_post_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %>
+            </div>
+          </td>
+        </tr>
+      <% }); %>
+    <% } else { %>
+      <tr>
+        <td colspan="5">
+          <div class="empty-state">
+            <i class="fas fa-comment-slash"></i>
+            <h3>No threads yet</h3>
+            <p>Be the first to start a discussion!</p>
+          </div>
+        </td>
+      </tr>
+    <% } %>
+  </tbody>
+</table>
+
+<% if (typeof loggedInUser !== 'undefined' && loggedInUser && (loggedInUser.role === 'mod' || loggedInUser.role === 'admin')) { %>
+<div class="mod-section" style="margin-top: 20px;" data-testid="section-recent-threads">
+  <div class="mod-section-header" style="background: linear-gradient(180deg, #6a3a3a 0%, #4a2a2a 100%); color: #fff; padding: 8px 12px; font-size: 12px;">
+    <i class="fas fa-hammer"></i> Recent Threads (Quick Mod Tools)
+  </div>
+  <div class="mod-section-body" style="padding: 0; max-height: 300px; overflow-y: auto;">
+    <% if (recentThreads && recentThreads.length > 0) { %>
+      <% recentThreads.forEach(function(thread) { %>
+        <div class="recent-post-item" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #ddd; font-size: 11px;" data-testid="recent-thread-<%= thread.id %>">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: bold; margin-bottom: 4px;">
+              <i class="fas fa-file-alt" style="color: #666;"></i>
+              <a href="/thread/<%= thread.id %>"><%= thread.title.substring(0, 50) %><%= thread.title.length > 50 ? '...' : '' %></a>
+            </div>
+            <div style="color: #666;">
+              by <span class="role-<%= thread.author_role %>"><%= thread.author_username %></span>
+            </div>
+            <div style="color: #999; font-size: 10px; margin-top: 4px;">
+              <%= new Date(thread.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) %>
+            </div>
+          </div>
+          <div style="display: flex; gap: 5px; margin-left: 10px; flex-shrink: 0;">
+            <a href="/mod/user/<%= thread.author_user_id %>" class="btn btn-secondary" style="padding: 3px 6px; font-size: 9px;" data-testid="link-mod-user-from-thread-<%= thread.author_user_id %>">
+              <i class="fas fa-user-cog"></i> User
+            </a>
+            <form action="/mod/action" method="POST" class="action-form" style="display: inline;" data-testid="form-lock-from-recent-<%= thread.id %>">
+              <input type="hidden" name="action" value="<%= thread.locked ? 'unlock' : 'lock' %>">
+              <input type="hidden" name="targetType" value="thread">
+              <input type="hidden" name="targetId" value="<%= thread.id %>">
+              <button type="submit" class="btn" style="padding: 3px 6px; font-size: 9px; background: #666; color: #fff; border: 1px solid #444;">
+                <i class="fas fa-<%= thread.locked ? 'unlock' : 'lock' %>"></i> <%= thread.locked ? 'Unlock' : 'Lock' %>
+              </button>
+            </form>
+            <form action="/mod/action" method="POST" class="action-form" style="display: inline;" data-testid="form-warn-thread-author-<%= thread.id %>">
+              <input type="hidden" name="action" value="warn">
+              <input type="hidden" name="targetType" value="thread">
+              <input type="hidden" name="targetId" value="<%= thread.id %>">
+              <input type="hidden" name="targetUserId" value="<%= thread.author_user_id %>">
+              <input type="hidden" name="reason" value="Thread warning">
+              <button type="submit" class="btn" style="padding: 3px 6px; font-size: 9px; background: #f90; color: #fff; border: 1px solid #c70;">
+                <i class="fas fa-exclamation-triangle"></i> Warn
+              </button>
+            </form>
+            <form action="/mod/action" method="POST" class="action-form" style="display: inline;" data-testid="form-ban-thread-author-<%= thread.id %>">
+              <input type="hidden" name="action" value="ban">
+              <input type="hidden" name="targetUserId" value="<%= thread.author_user_id %>">
+              <input type="hidden" name="reason" value="Rule violation">
+              <input type="hidden" name="duration" value="24">
+              <button type="submit" class="btn" style="padding: 3px 6px; font-size: 9px; background: #900; color: #fff; border: 1px solid #600;">
+                <i class="fas fa-ban"></i> Ban
+              </button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div style="padding: 20px; text-align: center; color: #666;">
+        <i class="fas fa-inbox"></i> No recent threads to moderate.
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="mod-section" style="margin-top: 15px;" data-testid="section-recent-posts">
+  <div class="mod-section-header" style="background: linear-gradient(180deg, #6a3a3a 0%, #4a2a2a 100%); color: #fff; padding: 8px 12px; font-size: 12px;">
+    <i class="fas fa-hammer"></i> Recent Replies (Quick Mod Tools)
+  </div>
+  <div class="mod-section-body" style="padding: 0; max-height: 300px; overflow-y: auto;">
+    <% if (recentPosts && recentPosts.length > 0) { %>
+      <% recentPosts.forEach(function(post) { %>
+        <div class="recent-post-item" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; border-bottom: 1px solid #ddd; font-size: 11px;" data-testid="recent-post-<%= post.id %>">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: bold; margin-bottom: 4px;">
+              <span class="role-<%= post.author_role %>"><%= post.author_username %></span>
+              in <a href="/thread/<%= post.thread_id %>#post-<%= post.id %>"><%= post.thread_title.substring(0, 40) %><%= post.thread_title.length > 40 ? '...' : '' %></a>
+            </div>
+            <div style="color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 400px;">
+              <%= post.body.substring(0, 100) %><%= post.body.length > 100 ? '...' : '' %>
+            </div>
+            <div style="color: #999; font-size: 10px; margin-top: 4px;">
+              <%= new Date(post.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' }) %>
+            </div>
+          </div>
+          <div style="display: flex; gap: 5px; margin-left: 10px; flex-shrink: 0;">
+            <a href="/mod/user/<%= post.author_user_id %>" class="btn btn-secondary" style="padding: 3px 6px; font-size: 9px;" data-testid="link-mod-user-from-recent-<%= post.author_user_id %>">
+              <i class="fas fa-user-cog"></i> User
+            </a>
+            <form action="/mod/action" method="POST" class="action-form" style="display: inline;" data-testid="form-warn-from-recent-<%= post.id %>">
+              <input type="hidden" name="action" value="warn">
+              <input type="hidden" name="targetType" value="post">
+              <input type="hidden" name="targetId" value="<%= post.id %>">
+              <input type="hidden" name="targetUserId" value="<%= post.author_user_id %>">
+              <input type="hidden" name="reason" value="Content warning">
+              <button type="submit" class="btn" style="padding: 3px 6px; font-size: 9px; background: #f90; color: #fff; border: 1px solid #c70;">
+                <i class="fas fa-exclamation-triangle"></i> Warn
+              </button>
+            </form>
+            <form action="/mod/action" method="POST" class="action-form" style="display: inline;" data-testid="form-delete-from-recent-<%= post.id %>">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="targetType" value="post">
+              <input type="hidden" name="targetId" value="<%= post.id %>">
+              <input type="hidden" name="reason" value="Content violation">
+              <button type="submit" class="btn btn-danger" style="padding: 3px 6px; font-size: 9px;">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </form>
+            <form action="/mod/action" method="POST" class="action-form" style="display: inline;" data-testid="form-ban-from-recent-<%= post.id %>">
+              <input type="hidden" name="action" value="ban">
+              <input type="hidden" name="targetUserId" value="<%= post.author_user_id %>">
+              <input type="hidden" name="reason" value="Rule violation">
+              <input type="hidden" name="duration" value="24">
+              <button type="submit" class="btn" style="padding: 3px 6px; font-size: 9px; background: #900; color: #fff; border: 1px solid #600;">
+                <i class="fas fa-ban"></i> Ban
+              </button>
+            </form>
+          </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <div style="padding: 20px; text-align: center; color: #666;">
+        <i class="fas fa-inbox"></i> No recent replies to moderate.
+      </div>
+    <% } %>
+  </div>
+</div>
+<% } %>

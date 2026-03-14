@@ -1,0 +1,60 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: 'Forum Rules', url: null }
+];
+%>
+
+<div class="page-title">
+  <h2><i class="fas fa-scroll"></i> Forum Rules</h2>
+  <p>These rules are subject to change without notice. Ignorance is not an excuse.</p>
+</div>
+
+<div class="flash-message flash-info" style="margin-bottom: 15px;">
+  <i class="fas fa-info-circle"></i>
+  Rules may be interpreted flexibly at moderator discretion. "Vibes" are a valid enforcement criterion.
+</div>
+
+<div class="rules-list" data-testid="list-rules">
+  <% rules.forEach(function(rule) { %>
+    <div class="rule-item <%= rule.rule_number === 4 ? 'rule-classified' : '' %>" data-testid="rule-<%= rule.rule_number %>">
+      <span class="rule-number">Rule <%= rule.rule_number %></span>
+      <span class="rule-title"><%= rule.title %></span>
+      <div class="rule-description">
+        <%= rule.description %>
+      </div>
+      <% if (rule.edit_note || rule.last_edited) { %>
+        <div class="rule-edited">
+          <i class="fas fa-edit"></i>
+          Last edited: <%= new Date(rule.last_edited).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %>
+          <% if (rule.edit_note) { %>
+            - "<%= rule.edit_note %>"
+          <% } %>
+        </div>
+      <% } %>
+    </div>
+  <% }); %>
+</div>
+
+<div style="margin-top: 20px; padding: 15px; background: #333; color: #ccc; font-size: 10px; border: 1px solid #000;">
+  <strong style="color: #ff0;"><i class="fas fa-exclamation-triangle"></i> Important Notice:</strong>
+  <p style="margin-top: 8px; line-height: 1.6;">
+    The moderation team reserves the right to take action on any content that violates the "spirit" of the rules, 
+    even if no specific rule has been technically broken. User reputation, posting history, and general "vibes" 
+    may be considered in enforcement decisions.
+  </p>
+  <p style="margin-top: 8px; line-height: 1.6;">
+    Appeals are technically possible but rarely successful. All moderation logs are archived and may be displayed 
+    in the Cancelled User Museum.
+  </p>
+</div>
+
+<% if (typeof loggedInUser !== 'undefined' && loggedInUser && (loggedInUser.role === 'mod' || loggedInUser.role === 'admin')) { %>
+<div style="margin-top: 20px; padding: 15px; background: #fee; border: 1px solid #fcc;">
+  <strong style="color: #a00;"><i class="fas fa-hammer"></i> Moderator Tools:</strong>
+  <p style="margin-top: 8px; font-size: 10px; color: #666;">
+    Rule editing is available via the Mod Panel. All changes are logged and retroactively applied.
+  </p>
+  <a href="/mod" class="btn btn-primary" style="margin-top: 10px;">Go to Mod Panel</a>
+</div>
+<% } %>

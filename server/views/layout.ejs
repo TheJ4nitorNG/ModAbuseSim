@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title || 'The Forum That Ate Itself' %></title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="skip-nav">
+    <a href="#main-content">Skip to main content</a>
+  </div>
+  
+  <div class="page-wrapper">
+    <header class="forum-header">
+      <div class="header-top">
+        <div class="logo-area">
+          <h1 class="forum-title">
+            <i class="fas fa-skull"></i>
+            The Forum That Ate Itself
+            <i class="fas fa-skull"></i>
+          </h1>
+          <div class="tagline">Est. 2004 - "Where posts go to be moderated"</div>
+        </div>
+        <div class="user-control">
+          <% if (currentUser) { %>
+            <div class="current-user-info">
+              <span class="welcome-text">Welcome, <strong><%= currentUser.username %></strong></span>
+              <span class="role-badge role-<%= currentUser.role %>"><%= currentUser.role.toUpperCase() %></span>
+              <span class="reputation" title="Reputation">
+                <i class="fas fa-star"></i> <%= currentUser.reputation %>
+              </span>
+              <a href="/logout" class="btn btn-small" data-testid="link-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+            <% if (typeof loggedInUser !== 'undefined' && loggedInUser && loggedInUser.role === 'admin') { %>
+              <form action="/switch-user" method="POST" class="user-switch-form" data-testid="form-switch-user" title="Admin: Switch to test as another user">
+                <label for="acting-user"><i class="fas fa-user-secret"></i> Act as:</label>
+                <select name="userId" id="acting-user" onchange="this.form.submit()" data-testid="select-acting-user">
+                  <% users.forEach(function(u) { %>
+                    <option value="<%= u.id %>" <%= currentUser && currentUser.id === u.id ? 'selected' : '' %>>
+                      <%= u.username %> (<%= u.role %>)
+                    </option>
+                  <% }); %>
+                </select>
+              </form>
+            <% } %>
+          <% } else { %>
+            <div class="auth-links">
+              <a href="/login" class="btn btn-primary" data-testid="link-login"><i class="fas fa-sign-in-alt"></i> Login</a>
+              <a href="/register" class="btn btn-secondary" data-testid="link-register"><i class="fas fa-user-plus"></i> Register</a>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      
+      <nav class="main-nav">
+        <ul>
+          <li><a href="/" data-testid="link-home"><i class="fas fa-home"></i> Home</a></li>
+          <li><a href="/rules" data-testid="link-rules"><i class="fas fa-scroll"></i> Rules</a></li>
+          <li><a href="/museum" data-testid="link-museum"><i class="fas fa-archive"></i> Cancelled User Museum</a></li>
+          <% if (typeof loggedInUser !== 'undefined' && loggedInUser && (loggedInUser.role === 'mod' || loggedInUser.role === 'admin')) { %>
+            <li><a href="/mod" data-testid="link-mod"><i class="fas fa-hammer"></i> Mod Panel</a></li>
+          <% } %>
+        </ul>
+      </nav>
+      
+      <div class="breadcrumbs">
+        <% if (typeof breadcrumbs !== 'undefined' && breadcrumbs.length > 0) { %>
+          <% breadcrumbs.forEach(function(crumb, i) { %>
+            <% if (crumb.url) { %>
+              <a href="<%= crumb.url %>"><%= crumb.label %></a>
+            <% } else { %>
+              <span><%= crumb.label %></span>
+            <% } %>
+            <% if (i < breadcrumbs.length - 1) { %> &gt; <% } %>
+          <% }); %>
+        <% } else { %>
+          <a href="/">Home</a>
+        <% } %>
+      </div>
+    </header>
+    
+    <main id="main-content" class="forum-main">
+      <div class="content-wrapper">
+        <div class="main-column">
+          <% if (typeof flash !== 'undefined' && flash) { %>
+            <div class="flash-message flash-<%= flash.type %>">
+              <i class="fas fa-<%= flash.type === 'error' ? 'exclamation-triangle' : flash.type === 'success' ? 'check-circle' : 'info-circle' %>"></i>
+              <%= flash.message %>
+            </div>
+          <% } %>
+          
+          <%- body %>
+        </div>
+        
+        <aside class="sidebar">
+          <div class="sidebar-box" data-testid="box-whos-online">
+            <h3><i class="fas fa-users"></i> Who's Online</h3>
+            <div class="online-list">
+              <% if (typeof onlineUsers !== 'undefined' && onlineUsers.length > 0) { %>
+                <% onlineUsers.slice(0, 10).forEach(function(ou) { %>
+                  <span class="online-user role-<%= ou.role %>"><%= ou.username %></span><% if (onlineUsers.indexOf(ou) < Math.min(onlineUsers.length, 10) - 1) { %>, <% } %>
+                <% }); %>
+                <% if (onlineUsers.length > 10) { %>
+                  <span class="more-users">+<%= onlineUsers.length - 10 %> more</span>
+                <% } %>
+              <% } else { %>
+                <span class="no-users">Nobody is online (or so they claim)</span>
+              <% } %>
+            </div>
+          </div>
+          
+          <div class="sidebar-box" data-testid="box-forum-stats">
+            <h3><i class="fas fa-chart-bar"></i> Forum Statistics</h3>
+            <table class="stats-table">
+              <tr><td>Total Threads:</td><td><%= typeof stats !== 'undefined' ? stats.totalThreads : 0 %></td></tr>
+              <tr><td>Total Posts:</td><td><%= typeof stats !== 'undefined' ? stats.totalPosts : 0 %></td></tr>
+              <tr><td>Total Members:</td><td><%= typeof stats !== 'undefined' ? stats.totalUsers : 0 %></td></tr>
+              <tr><td>Newest Member:</td><td><%= typeof stats !== 'undefined' ? stats.newestUser : 'None' %></td></tr>
+            </table>
+          </div>
+          
+          <div class="sidebar-box recent-bans" data-testid="box-recent-bans">
+            <h3><i class="fas fa-gavel"></i> Recent Bans</h3>
+            <% if (typeof recentBans !== 'undefined' && recentBans.length > 0) { %>
+              <ul class="ban-list">
+                <% recentBans.forEach(function(ban) { %>
+                  <li>
+                    <a href="/museum?username=<%= encodeURIComponent(ban.username) %>"><%= ban.username %></a>
+                    <span class="ban-reason"><%= ban.reason_code %></span>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <p class="no-bans">No recent bans (suspicious...)</p>
+            <% } %>
+          </div>
+        </aside>
+      </div>
+    </main>
+    
+    <footer class="forum-footer">
+      <div class="footer-content">
+        <p>The Forum That Ate Itself &copy; 2004-<%= new Date().getFullYear() %></p>
+        <p class="footer-disclaimer">All moderation decisions are final and/or subject to change without notice.</p>
+        <p class="footer-stats">
+          Page generated in <%= Math.floor(Math.random() * 50 + 10) %>ms | 
+          Server load: <%= (Math.random() * 2).toFixed(2) %>
+        </p>
+      </div>
+    </footer>
+  </div>
+  
+  <script src="/app.js"></script>
+</body>
+</html>

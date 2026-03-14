@@ -1,0 +1,108 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: 'Cancelled User Museum', url: null }
+];
+%>
+
+<div class="page-title" style="background: linear-gradient(180deg, #3d3d3d 0%, #2d2d2d 100%); border-bottom: 3px solid #c9a43e;">
+  <h2><i class="fas fa-archive"></i> The Cancelled User Museum</h2>
+  <p>A permanent archive of those who have fallen afoul of forum moderation.</p>
+</div>
+
+<div class="flash-message flash-info" style="background: #2d2d2d; border-color: #444; color: #aaa;">
+  <i class="fas fa-info-circle"></i>
+  This museum documents moderation actions for historical purposes. Verdicts may be contested. Truth is subjective.
+</div>
+
+<div class="museum-filters" data-testid="container-museum-filters">
+  <h3><i class="fas fa-filter"></i> Filter Exhibits</h3>
+  <form action="/museum" method="GET" class="filter-row" data-testid="form-museum-filters">
+    <div class="filter-group">
+      <label for="filter-reason">Ban Reason</label>
+      <select name="reason" id="filter-reason" data-testid="select-filter-reason">
+        <option value="">All reasons</option>
+        <option value="spam" <%= filters.reason === 'spam' ? 'selected' : '' %>>Spam</option>
+        <option value="derailing" <%= filters.reason === 'derailing' ? 'selected' : '' %>>Derailing</option>
+        <option value="wrong-vibes" <%= filters.reason === 'wrong-vibes' ? 'selected' : '' %>>Wrong Vibes</option>
+        <option value="disrespect" <%= filters.reason === 'disrespect' ? 'selected' : '' %>>Disrespect</option>
+        <option value="rule-3" <%= filters.reason === 'rule-3' ? 'selected' : '' %>>Rule 3 Violation</option>
+        <option value="other" <%= filters.reason === 'other' ? 'selected' : '' %>>Other</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="filter-year">Year</label>
+      <select name="year" id="filter-year" data-testid="select-filter-year">
+        <option value="">All years</option>
+        <option value="2009" <%= filters.year === '2009' ? 'selected' : '' %>>2009</option>
+        <option value="2008" <%= filters.year === '2008' ? 'selected' : '' %>>2008</option>
+        <option value="2007" <%= filters.year === '2007' ? 'selected' : '' %>>2007</option>
+        <option value="2006" <%= filters.year === '2006' ? 'selected' : '' %>>2006</option>
+        <option value="2005" <%= filters.year === '2005' ? 'selected' : '' %>>2005</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="filter-severity">Severity</label>
+      <select name="severity" id="filter-severity" data-testid="select-filter-severity">
+        <option value="">All severities</option>
+        <option value="1" <%= filters.severity === '1' ? 'selected' : '' %>>1 - Minor</option>
+        <option value="2" <%= filters.severity === '2' ? 'selected' : '' %>>2</option>
+        <option value="3" <%= filters.severity === '3' ? 'selected' : '' %>>3 - Moderate</option>
+        <option value="4" <%= filters.severity === '4' ? 'selected' : '' %>>4</option>
+        <option value="5" <%= filters.severity === '5' ? 'selected' : '' %>>5 - Severe</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <button type="submit" class="btn btn-primary" data-testid="button-apply-filters">
+        <i class="fas fa-search"></i> Filter
+      </button>
+      <a href="/museum" class="btn btn-secondary">Clear</a>
+    </div>
+  </form>
+</div>
+
+<% if (entries && entries.length > 0) { %>
+  <div class="museum-grid" data-testid="grid-museum-entries">
+    <% entries.forEach(function(entry) { %>
+      <div class="exhibit-card" data-testid="card-exhibit-<%= entry.id %>">
+        <div class="exhibit-card-header">
+          <div class="exhibit-number">EXHIBIT #<%= String(entry.id).padStart(3, '0') %></div>
+          <div class="exhibit-username">"<%= entry.username %>"</div>
+        </div>
+        <div class="exhibit-card-body">
+          <div class="exhibit-meta">
+            <span><i class="fas fa-calendar"></i> <%= new Date(entry.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) %></span>
+            <% if (entry.ban_reason) { %>
+              <span><i class="fas fa-gavel"></i> <%= entry.ban_reason %></span>
+            <% } %>
+          </div>
+          <div style="margin: 8px 0;">
+            <span class="verdict-badge verdict-<%= entry.verdict.toLowerCase().replace(' ', '-') %>">
+              <%= entry.verdict %>
+            </span>
+          </div>
+          <div class="exhibit-summary">
+            <%= entry.summary.substring(0, 150) %><%= entry.summary.length > 150 ? '...' : '' %>
+          </div>
+          <a href="/museum/<%= entry.id %>" class="exhibit-link" data-testid="link-exhibit-<%= entry.id %>">
+            View Full Exhibit <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } else { %>
+  <div class="empty-state" style="background: #fff; border: 1px solid #bbb; padding: 60px 20px;">
+    <i class="fas fa-archive"></i>
+    <h3>No Exhibits Found</h3>
+    <p>The museum is currently empty, or no entries match your filters.</p>
+    <p style="margin-top: 10px; font-style: italic; color: #999;">This is either a triumph of moderation or a sign of what's to come.</p>
+  </div>
+<% } %>
+
+<div style="margin-top: 30px; padding: 20px; background: #2d2d2d; color: #aaa; font-size: 10px; text-align: center; border: 1px solid #444;">
+  <i class="fas fa-monument" style="font-size: 24px; color: #c9a43e; margin-bottom: 10px; display: block;"></i>
+  <strong style="color: #fff;">The Cancelled User Museum</strong>
+  <p style="margin-top: 8px;">Preserving the memory of those who posted too boldly.</p>
+  <p style="margin-top: 5px; font-style: italic;">"Those who do not learn from moderation history are doomed to repeat it."</p>
+</div>

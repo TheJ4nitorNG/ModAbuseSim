@@ -1,0 +1,215 @@
+<% 
+const breadcrumbs = [
+  { label: 'Home', url: '/' },
+  { label: 'Mod Panel', url: '/mod' },
+  { label: user.username, url: null }
+];
+%>
+
+<div class="page-title" style="background: linear-gradient(180deg, #6a3a3a 0%, #4a2a2a 100%);">
+  <h2><i class="fas fa-user-cog"></i> User Profile: <%= user.username %></h2>
+  <p>Moderation view - All information is logged.</p>
+</div>
+
+<% if (!currentUser || (currentUser.role !== 'mod' && currentUser.role !== 'admin')) { %>
+  <div class="flash-message flash-error">
+    <i class="fas fa-ban"></i>
+    Access denied. This area is restricted to moderators and administrators.
+  </div>
+<% } else { %>
+
+<div class="user-profile-grid">
+  <div>
+    <div class="user-card" data-testid="card-user-info">
+      <div class="user-card-header">
+        <div class="user-card-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="user-card-username role-<%= user.role %>"><%= user.username %></div>
+        <div class="user-card-title"><%= user.title %></div>
+        <div style="margin-top: 8px;">
+          <span class="role-badge role-<%= user.role %>"><%= user.role.toUpperCase() %></span>
+        </div>
+      </div>
+      <div class="user-card-body">
+        <div class="user-stat-row">
+          <span class="user-stat-label">User ID</span>
+          <span class="user-stat-value">#<%= user.id %></span>
+        </div>
+        <div class="user-stat-row">
+          <span class="user-stat-label">Status</span>
+          <span class="user-stat-value <%= user.status %>"><%= user.status.toUpperCase() %></span>
+        </div>
+        <div class="user-stat-row">
+          <span class="user-stat-label">Reputation</span>
+          <span class="user-stat-value" style="color: <%= user.reputation >= 0 ? '#3a3' : '#a33' %>;"><%= user.reputation %></span>
+        </div>
+        <div class="user-stat-row">
+          <span class="user-stat-label">Posts</span>
+          <span class="user-stat-value"><%= user.post_count %></span>
+        </div>
+        <div class="user-stat-row">
+          <span class="user-stat-label">Joined</span>
+          <span class="user-stat-value"><%= new Date(user.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+        </div>
+        <div class="user-stat-row">
+          <span class="user-stat-label">Last Seen</span>
+          <span class="user-stat-value"><%= new Date(user.last_seen_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></span>
+        </div>
+        <% if (user.signature) { %>
+        <div class="user-stat-row" style="flex-direction: column; align-items: flex-start;">
+          <span class="user-stat-label">Signature</span>
+          <span class="user-stat-value" style="font-size: 9px; font-style: italic; color: #666; margin-top: 3px;"><%= user.signature %></span>
+        </div>
+        <% } %>
+      </div>
+      <div class="user-card-actions">
+        <% if (user.status !== 'banned') { %>
+          <button type="button" class="btn btn-danger" onclick="document.getElementById('ban-form').style.display='block'" data-testid="button-show-ban-form">
+            <i class="fas fa-gavel"></i> Ban User
+          </button>
+        <% } else { %>
+          <form action="/mod/action" method="POST" data-testid="form-unban-user">
+            <input type="hidden" name="action" value="unban">
+            <input type="hidden" name="userId" value="<%= user.id %>">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              <i class="fas fa-unlock"></i> Unban User
+            </button>
+          </form>
+        <% } %>
+        <form action="/mod/action" method="POST" style="display: flex; gap: 5px;" data-testid="form-warn-user">
+          <input type="hidden" name="action" value="warn">
+          <input type="hidden" name="userId" value="<%= user.id %>">
+          <input type="text" name="reason" placeholder="Reason..." style="flex: 1; padding: 5px; font-size: 10px;">
+          <button type="submit" class="btn btn-secondary">
+            <i class="fas fa-exclamation-triangle"></i> Warn
+          </button>
+        </form>
+        <form action="/mod/action" method="POST" style="display: flex; gap: 5px;" data-testid="form-adjust-rep">
+          <input type="hidden" name="action" value="adjust_rep">
+          <input type="hidden" name="userId" value="<%= user.id %>">
+          <input type="number" name="amount" placeholder="+/- rep" style="width: 80px; padding: 5px; font-size: 10px;">
+          <button type="submit" class="btn btn-secondary">
+            <i class="fas fa-star"></i> Adjust Rep
+          </button>
+        </form>
+      </div>
+    </div>
+    
+    <!-- Ban Form (hidden by default) -->
+    <div id="ban-form" style="display: none; margin-top: 15px;" class="mod-section" data-testid="container-ban-form">
+      <div class="mod-section-header">
+        <i class="fas fa-gavel"></i> Ban User
+      </div>
+      <div class="mod-section-body">
+        <form action="/mod/action" method="POST" data-testid="form-ban-user">
+          <input type="hidden" name="action" value="ban">
+          <input type="hidden" name="userId" value="<%= user.id %>">
+          
+          <div class="form-group">
+            <label>Reason Code</label>
+            <select name="reasonCode" required data-testid="select-ban-reason-code">
+              <option value="spam">Spam</option>
+              <option value="derailing">Derailing</option>
+              <option value="wrong-vibes">Wrong Vibes</option>
+              <option value="disrespect">Disrespect</option>
+              <option value="rule-3">Rule 3 Violation</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label>Ban Reason (detailed)</label>
+            <textarea name="reasonText" rows="3" placeholder="Describe the infraction..." required data-testid="input-ban-reason-text"></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Severity (1-5)</label>
+            <input type="range" name="severity" min="1" max="5" value="3" oninput="document.getElementById('severity-display').textContent = this.value" data-testid="input-ban-severity">
+            <span id="severity-display" style="font-weight: bold;">3</span>
+          </div>
+          
+          <div class="form-group">
+            <label>Duration</label>
+            <select name="duration" data-testid="select-ban-duration">
+              <option value="24">24 hours</option>
+              <option value="48">48 hours</option>
+              <option value="168">1 week</option>
+              <option value="720">30 days</option>
+              <option value="0">Permanent</option>
+            </select>
+          </div>
+          
+          <div style="background: #ffe; padding: 10px; border: 1px solid #cc9; margin-bottom: 15px; font-size: 10px;">
+            <i class="fas fa-dice"></i> <strong>RNG Notice:</strong> 
+            Final outcome may vary due to moderation RNG. Severity may swing by +/- 2. 
+            There is a <%= Math.floor(Math.random() * 10 + 5) %>% chance of unexpected escalation.
+          </div>
+          
+          <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn btn-secondary" onclick="document.getElementById('ban-form').style.display='none'">Cancel</button>
+            <button type="submit" class="btn btn-danger" data-testid="button-submit-ban">
+              <i class="fas fa-gavel"></i> Execute Ban
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div class="infraction-history" data-testid="container-infraction-history">
+    <div class="infraction-history-header">
+      <i class="fas fa-exclamation-triangle"></i> Infraction History
+    </div>
+    <div class="infraction-list">
+      <% if (modActions.length > 0 || bans.length > 0) { %>
+        <% bans.forEach(function(ban) { %>
+          <div class="infraction-item">
+            <span class="infraction-type ban">BAN</span>
+            <strong><%= ban.reason_code %></strong>
+            <div class="infraction-details">
+              <%= ban.reason_text %>
+            </div>
+            <div class="infraction-meta">
+              Severity: <%= ban.severity %>/5 | 
+              Duration: <%= ban.duration_hours === 0 ? 'Permanent' : ban.duration_hours + ' hours' %> |
+              <%= new Date(ban.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+              <% if (!ban.active) { %> | <span style="color: #3a3;">EXPIRED/LIFTED</span><% } %>
+            </div>
+          </div>
+        <% }); %>
+        
+        <% modActions.forEach(function(action) { %>
+          <div class="infraction-item">
+            <span class="infraction-type <%= action.action_type %>"><%= action.action_type.toUpperCase() %></span>
+            <% 
+              let payload = {};
+              try { payload = JSON.parse(action.action_payload || '{}'); } catch(e) {}
+            %>
+            <% if (payload.reason) { %>
+              <div class="infraction-details"><%= payload.reason %></div>
+            <% } %>
+            <div class="infraction-meta">
+              By: <%= action.actor_username %> |
+              <%= new Date(action.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div class="empty-state" style="padding: 30px;">
+          <i class="fas fa-check-circle" style="color: #3a3;"></i>
+          <h3>Clean Record</h3>
+          <p>No infractions on file. Yet.</p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<div class="action-bar" style="margin-top: 20px;">
+  <a href="/mod" class="btn btn-secondary" data-testid="link-back-to-mod">
+    <i class="fas fa-arrow-left"></i> Back to Mod Panel
+  </a>
+</div>
+
+<% } %>

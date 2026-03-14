@@ -1,0 +1,140 @@
+<div class="welcome-overlay" data-testid="welcome-modal">
+  <div class="welcome-modal">
+    <div class="welcome-header">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h1>WELCOME TO THE FORUM THAT ATE ITSELF</h1>
+      <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <div class="welcome-content">
+      <div class="notice-box" style="background: #fefebe; border: 2px solid #cc0000; padding: 15px; margin-bottom: 15px;">
+        <h3 style="color: #cc0000; margin: 0 0 10px 0;"><i class="fas fa-gamepad"></i> THIS IS A GAME / SATIRE PROJECT</h3>
+        <p style="margin: 0;">
+          What you're about to experience is a <strong>fully functional but satirical forum</strong> that parodies 
+          the chaotic moderation culture of early 2000s web forums. Think phpBB circa 2006, 
+          but with the mod abuse cranked to 11.
+        </p>
+      </div>
+      
+      <div class="welcome-section">
+        <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+        <ul>
+          <li><strong>Real Posts, Real Chaos:</strong> Everything you post is public and persists. Other visitors can see what you write.</li>
+          <li><strong>RNG Moderation:</strong> Mod actions have random outcomes. A simple warning might escalate to a ban. Because vibes.</li>
+          <li><strong>The Cancelled User Museum:</strong> Banned users get commemorated in our museum. It's an honor, really.</li>
+          <li><strong>Rule 4 Exists:</strong> We can neither confirm nor deny what it says.</li>
+        </ul>
+      </div>
+      
+      <div class="welcome-section" style="background: #f5f5f5; padding: 15px; border: 1px solid #ccc;">
+        <h3><i class="fas fa-user-shield"></i> Admin Access (For Testing)</h3>
+        <p>Want to experience the power of moderation? Use these credentials:</p>
+        <div style="background: #333; color: #0f0; padding: 10px; font-family: monospace; margin: 10px 0;">
+          <strong>Username:</strong> Administrator<br>
+          <strong>Password:</strong> admin123
+        </div>
+        <p style="font-size: 11px; color: #666; margin: 0;">
+          With great power comes great... inconsistency. Enjoy banning people for "wrong vibes."
+        </p>
+      </div>
+      
+      <div class="welcome-section">
+        <h3><i class="fas fa-users"></i> Join the Chaos</h3>
+        <p>
+          Create your own account to post, get warned for mysterious reasons, 
+          and potentially end up in the Cancelled User Museum yourself.
+        </p>
+      </div>
+    </div>
+    
+    <div class="welcome-actions" style="text-align: center; padding: 20px; border-top: 1px solid #ccc; background: #f0f0f0;">
+      <form action="/dismiss-welcome" method="POST" style="display: inline;">
+        <button type="submit" class="btn btn-primary" style="font-size: 14px; padding: 10px 30px;" data-testid="button-enter-forum">
+          <i class="fas fa-door-open"></i> Enter The Forum
+        </button>
+      </form>
+      <p style="margin-top: 15px; font-size: 11px; color: #666;">
+        By entering, you acknowledge that moderation decisions may be arbitrary and that's kind of the point.
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+.welcome-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.welcome-modal {
+  background: #fff;
+  max-width: 700px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 3px solid #000080;
+  box-shadow: 5px 5px 0 #000;
+}
+
+.welcome-header {
+  background: linear-gradient(to bottom, #3366cc 0%, #003399 100%);
+  color: #fff;
+  padding: 15px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.welcome-header h1 {
+  margin: 0;
+  font-size: 18px;
+  text-shadow: 1px 1px 2px #000;
+}
+
+.welcome-header i {
+  color: #ffcc00;
+  font-size: 24px;
+}
+
+.welcome-content {
+  padding: 20px;
+}
+
+.welcome-section {
+  margin-bottom: 15px;
+}
+
+.welcome-section h3 {
+  color: #003366;
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 5px;
+}
+
+.welcome-section ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.welcome-section li {
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.welcome-section p {
+  font-size: 12px;
+  margin: 5px 0;
+}
+</style>
