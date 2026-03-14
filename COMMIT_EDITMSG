@@ -1,0 +1,10 @@
+Add recent threads to the moderator tools section
+
+Introduces a new `getRecentThreads` function in `server/db.ts` to fetch threads by creation date. Updates `server/forum-routes.ts` to include these recent threads in the data passed to the index view. Modifies `server/views/index.ejs` to display recent threads alongside recent posts in the Quick Mod Tools section.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 22d069ef-e387-4f42-923a-c79cf31170a5
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Event-Id: 065a05ac-b8ab-4891-b843-c8aad86feaae
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/b6b9c85d-c873-4d9e-b48f-f01e84e3459a/22d069ef-e387-4f42-923a-c79cf31170a5/xyMLUVu
+Replit-Helium-Checkpoint-Created: true
