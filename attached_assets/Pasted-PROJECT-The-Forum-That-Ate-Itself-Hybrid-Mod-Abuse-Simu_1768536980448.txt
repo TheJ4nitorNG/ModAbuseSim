@@ -1,0 +1,215 @@
+PROJECT: “The Forum That Ate Itself” (Hybrid Mod Abuse Simulator + Cancelled User Museum)
+
+GOAL (MVP):
+Build a functional fake forum where users can post threads/replies, mods can “moderate” with inconsistent/abusive enforcement, and every ban automatically creates a searchable “Cancelled User Museum” entry with a timeline + conflicting notes.
+
+STACK (choose simple + Replit-friendly):
+- Node.js + Express
+- SQLite (better-sqlite3) for persistence
+- Server-rendered pages using EJS (no React)
+- Basic CSS (intentionally old-web: 2004–2009 forum vibes)
+- Optional: tiny client-side JS for “report” buttons and collapse/expand logs
+
+DELIVERABLES:
+- A working web app with:
+  1) Forum index, thread pages, create thread, reply
+  2) Mod dashboard to warn/edit/delete/ban with RNG outcomes
+  3) Museum index + museum detail pages
+  4) Search/filter museum by ban reason, year, mod, severity
+
+TONE / UX:
+- Looks functional, but slightly cursed.
+- Old forum UI: table layout, signatures, badges, “Last seen 2008”.
+- Error messages and mod actions should feel petty/irrational but not hateful.
+- Avoid slurs, real-person callouts, or protected-class targeting. Keep satire abstract.
+
+DATA MODEL (SQLite tables):
+1) users
+- id INTEGER PK
+- username TEXT UNIQUE
+- role TEXT CHECK(role in ('user','mod','admin')) default 'user'
+- reputation INTEGER default 0
+- created_at TEXT (ISO)
+- last_seen_at TEXT (ISO)
+- status TEXT CHECK(status in ('active','banned')) default 'active'
+
+2) threads
+- id INTEGER PK
+- author_user_id INTEGER FK(users.id)
+- title TEXT
+- body TEXT
+- created_at TEXT
+- locked INTEGER default 0
+
+3) posts
+- id INTEGER PK
+- thread_id INTEGER FK(threads.id)
+- author_user_id INTEGER FK(users.id)
+- body TEXT
+- created_at TEXT
+- edited_at TEXT nullable
+- deleted INTEGER default 0
+- mod_note TEXT nullable
+
+4) reports
+- id INTEGER PK
+- reporter_user_id INTEGER FK(users.id)
+- target_type TEXT CHECK(target_type in ('thread','post'))
+- target_id INTEGER
+- reason TEXT
+- created_at TEXT
+
+5) moderation_actions
+- id INTEGER PK
+- actor_user_id INTEGER FK(users.id)   -- mod/admin
+- target_user_id INTEGER nullable
+- target_post_id INTEGER nullable
+- target_thread_id INTEGER nullable
+- action_type TEXT (e.g. 'warn','edit','delete','lock','ban','unban','rule_change')
+- action_payload TEXT (JSON string)
+- created_at TEXT
+
+6) bans
+- id INTEGER PK
+- user_id INTEGER FK(users.id)
+- mod_user_id INTEGER FK(users.id)
+- reason_code TEXT (e.g. 'spam','derailing','wrong-vibes','disrespect','rule-3','other')
+- reason_text TEXT (freeform, petty)
+- severity INTEGER (1..5)
+- duration_hours INTEGER (0 = permanent)
+- created_at TEXT
+- expires_at TEXT nullable
+
+7) museum_entries
+- id INTEGER PK
+- user_id INTEGER FK(users.id)
+- created_at TEXT
+- title TEXT (e.g. “Exhibit #041: ‘xX_FlameMage_Xx’”)
+- summary TEXT (neutral-ish but ominous)
+- verdict TEXT (ambiguous: “Contested”, “Unclear”, “Overturned”, “Canonized”)
+
+8) museum_artifacts
+- id INTEGER PK
+- museum_entry_id INTEGER FK(museum_entries.id)
+- artifact_type TEXT (e.g. 'quote','screenshot_text','mod_log','witness_statement')
+- content TEXT
+- created_at TEXT
+- source_label TEXT (e.g. 'mod note', 'user quote', 'anonymous screenshot')
+
+CORE MECHANICS (important):
+A) Inconsistent Enforcement RNG
+When a mod action happens (warn/delete/edit/ban), outcome is determined by:
+- severity base (1..5) + random swing (-2..+2)
+- mod “mood” pseudo-random seeded daily
+- user reputation (low rep worsens outcome)
+Implement: function resolveAction(action, context) -> result object
+Examples:
+- “warn” may become “7-day ban”
+- “delete post” may also “lock thread”
+- “ban 24h” may become “permaban” 5% of time
+
+B) Rule Corruption (light)
+Have a “Rules” page with 10 rules stored in memory or DB table (rules).
+Allow admin/mod to “change” a rule (logged). These changes can be retroactive in the logs (“Rule clarified”).
+MVP: rules stored as JSON in DB table settings (key,value).
+
+C) Museum Auto-Population
+Whenever a ban is created:
+- Create museum_entry for the banned user (if not exists)
+- Add 3–7 museum_artifacts:
+  1) A quote from a random recent post by that user
+  2) A mod log excerpt (from moderation_actions)
+  3) A conflicting witness statement (randomly generated text)
+  4) Optionally a “missing screenshot” placeholder text like “[image missing]”
+Museum should feel like an archive with contradictions, not a moral judgement.
+
+PAGES / ROUTES:
+Public:
+- GET /                 -> forum index (recent threads)
+- GET /thread/:id       -> thread view with replies
+- GET /new-thread       -> form
+- POST /new-thread
+- POST /thread/:id/reply
+- POST /report          -> create report (post or thread)
+- GET /rules            -> current rules (and “last edited”)
+- GET /museum           -> museum index + filters/search
+- GET /museum/:id       -> museum exhibit detail (timeline + artifacts)
+
+Mod/Admin:
+- GET /mod              -> mod dashboard (queue: reports, recent actions)
+- POST /mod/action      -> perform warn/edit/delete/lock/ban/unban/rule_change
+- GET /mod/user/:id     -> user profile + mod history + ban button
+- GET /admin            -> (optional) promote mod, seed fake users, etc.
+
+AUTH (simple for MVP):
+No real login. Use a dropdown “Acting as” in header:
+- actingUserId stored in cookie or session
+Seed a few users: 1 admin, 2 mods, 20 fake users.
+Allow switching to admin/mod for testing.
+
+SEEDING:
+On first run:
+- Create tables
+- Insert demo users + threads + posts (old-web drama style)
+- Insert a few reports
+- Insert a few bans and museum entries
+
+FILES / STRUCTURE:
+- server.js
+- db.js (init + queries)
+- seed.js
+- /views (EJS templates)
+  - layout.ejs
+  - index.ejs
+  - thread.ejs
+  - new-thread.ejs
+  - museum.ejs
+  - museum_detail.ejs
+  - rules.ejs
+  - mod.ejs
+  - user_profile.ejs
+- /public
+  - styles.css (intentionally old forum style)
+  - app.js (optional minor JS)
+
+IMPLEMENTATION DETAILS:
+- Use better-sqlite3 for simple synchronous DB calls.
+- Store timestamps in ISO strings.
+- Sanitize basic input (escape HTML in templates).
+- Posts can be “deleted” as soft delete: deleted=1, replaced with “[deleted by moderator]”.
+- The mod “edit” action should preserve original in moderation_actions payload.
+
+CONTENT GENERATORS (tiny):
+Create small helper functions:
+- randomBanReason(): picks reason_code + petty reason_text
+- randomWitnessStatement(): conflicting testimony
+- randomModNote(): snide mod log line
+- pickQuoteFromUserPosts(userId): picks a sentence
+
+COMPLETION CHECKLIST:
+- App runs with “Run” button in Replit
+- Forum index shows threads
+- Can create thread + reply
+- Can report a post/thread
+- Mod dashboard shows reports
+- Mod can ban a user; ban changes user status; banned user can’t post
+- Ban auto-creates museum entry with artifacts
+- Museum index searchable/filterable
+- Museum detail page shows timeline: join date, last seen, incident, ban, artifacts, mod actions
+
+NON-GOALS (don’t overbuild):
+- No real accounts/passwords
+- No real-time websockets
+- No fancy frontend framework
+
+START NOW:
+1) Scaffold Express app, EJS, static folder
+2) Build db init + seed
+3) Build public forum pages
+4) Build reports + mod dashboard
+5) Add moderation RNG + bans
+6) Add museum generation + search
+
+When done, print a short “How to use” section on the homepage.
+
+Please produce the complete code and ensure it runs in Replit.
