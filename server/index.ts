@@ -149,7 +149,7 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-const port = parseInt(process.env.PORT || "5000", 10);
+const port = parseInt(process.env.PORT || "8080", 10);
 httpServer.listen(
   {
     port,
