@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for theforumthatateitself on 2026-03-19T03:58:29Z
+# fly.toml app configuration file generated for theforumthatateitself on 2026-03-19T04:21:48Z
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -7,13 +7,6 @@ app = 'theforumthatateitself'
 primary_region = 'yyz'
 
 [build]
-
-[[mounts]]
-  source = 'data'
-  destination = '/data'
-  auto_extend_size_threshold = 80
-  auto_extend_size_increment = '1GB'
-  auto_extend_size_limit = '10GB'
 
 [http_service]
   internal_port = 8080
