@@ -1,15 +1,11 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import path from "path";
-import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import { initDatabase, migrateAddPasswordColumn } from "./db";
 import { seedDatabase, initializeAdminPassword } from "./seed";
 import { forumRouter, authRouter } from "./forum-routes";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
